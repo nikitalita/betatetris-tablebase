@@ -21,7 +21,7 @@ std::vector<std::pair<int, int>> GetAvailableRanges(const fs::path path) {
   std::vector<std::pair<int, int>> ret;
   for (auto const& dir_entry : std::filesystem::directory_iterator{path}) {
     std::cmatch match;
-    if (std::regex_match(dir_entry.path().filename().c_str(), match, pattern)) {
+    if (std::regex_match(dir_entry.path().filename().string().c_str(), match, pattern)) {
       ret.push_back({std::stoi(match[1]), std::stoi(match[2])});
     }
   }

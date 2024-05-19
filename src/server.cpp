@@ -195,7 +195,7 @@ class BoardConnection : public std::enable_shared_from_this<BoardConnection>, pu
   void DoWork() {
     Play play;
     std::vector<CompressedClassReader<NodeThreshold>> readers;
-    for (int i = 0; i < kGroups; i++) readers.emplace_back(ThresholdPath(threshold_name, i));
+    for (int i = 0; i < kGroups; i++) readers.emplace_back(ThresholdPath(threshold_name, i).string());
     // receive: 25 bytes board + 1 byte current piece + 2 bytes lines
     constexpr size_t kReceiveSize = 28;
     // send: 21 bytes position ((r,x,y)*7) + 1 byte threshold

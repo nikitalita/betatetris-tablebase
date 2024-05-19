@@ -36,7 +36,7 @@ void WriteBoardMap(int group) {
   int pow = 31 - clz<uint32_t>(num_boards);
   pow = std::max(5, pow - 4); // ~32 boards / bucket
   spdlog::info("Writing board map for group {}", group);
-  WriteHashMap(BoardMapPath(group), std::move(vec), 1 << pow);
+  WriteHashMap(BoardMapPath(group).string(), std::move(vec), 1 << pow);
   spdlog::info("Board map writing done");
 }
 
@@ -45,7 +45,7 @@ void WriteBoardMap(int group) {
 void SplitBoards(const std::filesystem::path& fname) {
   spdlog::info("Start preprocessing");
   std::array<std::vector<CompactBoard>, kGroups> boards;
-  ClassReader<CompactBoard> reader(fname);
+  ClassReader<CompactBoard> reader(fname.string());
   size_t num_boards = 0;
   try {
     num_boards = BoardCount(fname);
@@ -75,7 +75,7 @@ void SplitBoards(const std::filesystem::path& fname) {
   spdlog::info("Sorting finished");
   for (int group = 0; group < kGroups; group++) {
     spdlog::info("Writing group {} with {} boards", group, boards[group].size());
-    ClassWriter<CompactBoard> writer(BoardPath(group));
+    ClassWriter<CompactBoard> writer(BoardPath(group).string());
     writer.Write(boards[group]);
   }
   spdlog::info("Done preprocessing");
@@ -261,8 +261,8 @@ void BuildEdges(int group) {
   std::vector<CompressedClassWriter<EvaluateNodeEdges>> eval_writers;
   std::vector<CompressedClassWriter<PositionNodeEdges>> pos_writers;
   for (int level = 0; level < kLevels; level++) {
-    eval_writers.emplace_back(EvaluateEdgePath(group, level), 512 * kPieces);
-    pos_writers.emplace_back(PositionEdgePath(group, level), 512 * kPieces);
+    eval_writers.emplace_back(EvaluateEdgePath(group, level).string(), 512 * kPieces);
+    pos_writers.emplace_back(PositionEdgePath(group, level).string(), 512 * kPieces);
   }
 
   spdlog::info("Start building edges");
@@ -307,7 +307,7 @@ void BuildEdges(const std::vector<int>& groups) {
 std::vector<size_t> GetBoardCountOffset(int group) {
   auto fname = BoardPath(group);
   size_t num_boards = BoardCount(fname);
-  ClassReader<CompactBoard> reader(fname);
+  ClassReader<CompactBoard> reader(fname.string());
 
   reader.Seek(num_boards - 1, 0);
   int max_count = Board(reader.ReadOne(0)).Count();

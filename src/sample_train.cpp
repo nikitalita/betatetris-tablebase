@@ -110,7 +110,7 @@ void SampleTrainingBoards(
   for (size_t i = 0; i < kGroups; i++) {
     auto fname = BoardPath(i);
     size_t num_boards = BoardCount(fname);
-    ClassReader<CompactBoard> reader(fname);
+    ClassReader<CompactBoard> reader(fname.string());
     auto all_boards = reader.ReadBatch(num_boards);
     decltype(output)::value_type buf;
     for (auto& [v, mark] : samples[i]) {

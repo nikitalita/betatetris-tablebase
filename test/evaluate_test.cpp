@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <random>
+#include <array>
 #include "../src/evaluate.h"
 
 namespace {

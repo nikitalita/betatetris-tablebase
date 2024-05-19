@@ -41,8 +41,8 @@ class Play {
 
   Play() {
     for (int i = 0; i < kGroups; i++) {
-      board_hash.emplace_back(BoardMapPath(i));
-      move_readers.emplace_back(MovePath(i));
+      board_hash.emplace_back(BoardMapPath(i).string());
+      move_readers.emplace_back(MovePath(i).string());
     }
   }
 };

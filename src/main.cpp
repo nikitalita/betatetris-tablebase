@@ -1,4 +1,4 @@
-#include <cxxabi.h>
+// #include <cxxabi.h>
 #include <thread>
 #include <iostream>
 #include <spdlog/spdlog.h>
@@ -739,9 +739,16 @@ int main(int argc, char** argv) {
     }
   } catch (std::exception& e) {
     int status;
+// if gnu
+#if defined(__GNUC__) && !defined(__clang__)
     char* type = abi::__cxa_demangle(abi::__cxa_current_exception_type()->name(), 0, 0, &status);
+#else
+    const char* type = "Unknown class";
+#endif
     spdlog::error("Exception {} when running command: {}", type, e.what());
+#if defined(__GNUC__) && !defined(__clang__)
     if (type) free(type);
+#endif
     return 1;
   }
 }

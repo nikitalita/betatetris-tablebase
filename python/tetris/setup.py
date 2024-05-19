@@ -18,11 +18,16 @@ class build_ext_ex(build_ext):
     }
 
     def build_extension(self, ext):
+        print('extra_compile_args:', self.extra_compile_args)
+        print('compiler.compiler_type:', self.compiler.compiler_type)
         extra_args = self.extra_compile_args.get(ext.name)
+        print('extra_args:', extra_args)
         if extra_args is not None:
             ctype = self.compiler.compiler_type
             ext.extra_compile_args = extra_args.get(ctype, [])
             ext.extra_link_args = extra_args.get(ctype, [])
+            print('ext.extra_compile_args:', ext.extra_compile_args)
+            print('ext.extra_link_args:', ext.extra_link_args)
 
         build_ext.build_extension(self, ext)
 

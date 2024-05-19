@@ -22,7 +22,7 @@ void SplitBoards(const std::filesystem::path&);
 template <class Func> void ProcessBoards(int group, Func&& f) {
   constexpr size_t kBlock = 65536;
   auto fname = BoardPath(group);
-  ClassReader<CompactBoard> reader(fname);
+  ClassReader<CompactBoard> reader(fname.string());
   while (true) {
     auto chunk = reader.ReadBatch(kBlock);
     for (auto& i : chunk) f(Board(i));

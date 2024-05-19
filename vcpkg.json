@@ -1,0 +1,12 @@
+{
+  "name": "betatetris",
+  "version": "0.0.1",
+  "dependencies": [
+    "argparse",
+    "boost-asio",
+    "boost-system",
+    "eigen3",
+    "spdlog",
+    "zstd"
+  ]
+}

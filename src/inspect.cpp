@@ -66,7 +66,7 @@ void PrintGrid(const std::vector<std::string>& grid, int col_width = 12, int col
 } // namespace
 
 void InspectBoard(int group, const std::vector<long>& board_idx) {
-  ClassReader<CompactBoard> reader(BoardPath(group));
+  ClassReader<CompactBoard> reader(BoardPath(group).string());
   for (auto id : board_idx) {
     reader.Seek(id, 4096);
     try {
@@ -89,10 +89,10 @@ void InspectBoardStats(int group) {
 
 void InspectEdge(int group, const std::vector<long>& board_idx, Level level, int piece) {
   int level_int = static_cast<int>(level);
-  ClassReader<CompactBoard> reader_cur(BoardPath(group));
-  ClassReader<CompactBoard> reader_nxt(BoardPath(NextGroup(group)));
-  CompressedClassReader<EvaluateNodeEdges> reader_eval_ed(EvaluateEdgePath(group, level_int));
-  CompressedClassReader<PositionNodeEdges> reader_pos_ed(PositionEdgePath(group, level_int));
+  ClassReader<CompactBoard> reader_cur(BoardPath(group).string());
+  ClassReader<CompactBoard> reader_nxt(BoardPath(NextGroup(group)).string());
+  CompressedClassReader<EvaluateNodeEdges> reader_eval_ed(EvaluateEdgePath(group, level_int).string());
+  CompressedClassReader<PositionNodeEdges> reader_pos_ed(PositionEdgePath(group, level_int).string());
   for (auto id : board_idx) {
     reader_cur.Seek(id, 4096);
     reader_eval_ed.Seek(id * kPieces + piece, 0, 0);
@@ -130,7 +130,7 @@ void InspectEdge(int group, const std::vector<long>& board_idx, Level level, int
 
 void InspectEdgeStats(int group, Level level) {
   int level_int = static_cast<int>(level);
-  CompressedClassReader<EvaluateNodeEdgesFastTmpl<4096>> reader(EvaluateEdgePath(group, level_int));
+  CompressedClassReader<EvaluateNodeEdgesFastTmpl<4096>> reader(EvaluateEdgePath(group, level_int).string());
   std::vector<size_t> num_next(256 * 7), num_piece(8);
   size_t max_buf_size = 0;
 
@@ -164,7 +164,7 @@ void InspectEdgeStats(int group, Level level) {
 }
 
 void InspectValue(int pieces, const std::vector<long>& board_idx) {
-  CompressedClassReader<NodeEval> reader(ValuePath(pieces));
+  CompressedClassReader<NodeEval> reader(ValuePath(pieces).string());
   for (auto id : board_idx) {
     reader.Seek(id, 4096);
     NodeEval val = reader.ReadOne();

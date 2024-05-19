@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.10...3.26)
 
 project(db-tetris)
-
+# set the language standard to c++ 20
+set(CMAKE_CXX_STANDARD 20)
 # options
-option(BUILD_TESTS "Build test programs" ON)
+option(BUILD_TESTS "Build test programs" OFF)
 if(NOT DEFINED ADJ_DELAY)
   set(ADJ_DELAY 18)
 endif()
@@ -30,7 +31,7 @@ set(CMAKE_CXX_FLAGS "-std=c++20 -mbmi2 -mavx2 -mfma -Wall -Wextra -Wno-unused-pa
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-
+set(EIGEN_TEST_CXX11 ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(zstd REQUIRED)
 find_package(Threads REQUIRED)
@@ -71,18 +72,21 @@ if(NOT HAVE_AVX2)
 endif()
 
 include(FetchContentExclude)
-FetchContent_Declare(
-  argparse
-  URL "https://github.com/p-ranav/argparse/archive/refs/tags/v3.0.zip"
-)
-FetchContent_Declare(
-  spdlog
-  URL "https://github.com/gabime/spdlog/archive/refs/tags/v1.12.0.zip"
-)
-FetchContent_Declare(
-  eigen
-  URL "https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip"
-)
+# FetchContent_Declare(
+#   argparse
+#   URL "https://github.com/p-ranav/argparse/archive/refs/tags/v3.0.zip"
+# )
+# FetchContent_Declare(
+#   spdlog
+#   URL "https://github.com/gabime/spdlog/archive/refs/tags/v1.12.0.zip"
+# )
+# FetchContent_Declare(
+#   eigen
+#   URL "https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip"
+# )
+find_package(argparse CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+find_package(Eigen3 CONFIG REQUIRED)
 FetchContent_Declare(
   sparse_map
   URL "https://github.com/Tessil/sparse-map/archive/refs/tags/v0.6.2.zip"
@@ -92,18 +96,21 @@ FetchContent_Declare(
   URL "https://github.com/Tessil/hopscotch-map/archive/refs/tags/v2.3.1.zip"
 )
 set(BOOST_INCLUDE_LIBRARIES system asio)
-FetchContent_Declare(
-  boost
-  URL "https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.tar.gz"
-)
+find_package(Boost 1.84.0 REQUIRED COMPONENTS system)
+# FetchContent_Declare(
+#   boost
+#   URL "https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.tar.gz"
+# )
 
-FetchContent_MakeAvailable_Exclude(argparse spdlog eigen sparse_map hopscotch_map boost)
+
+# FetchContent_MakeAvailable_Exclude(argparse spdlog eigen sparse_map hopscotch_map boost)
+FetchContent_MakeAvailable_Exclude(sparse_map hopscotch_map)
 
 add_executable(random_boards scripts/random_boards.cpp)
 add_executable(board_merge scripts/board_merge.cpp)
 target_link_libraries(board_merge tsl::sparse_map)
 add_executable(test_speed scripts/test_speed.cpp)
-target_link_libraries(test_speed eigen)
+target_link_libraries(test_speed Eigen3::Eigen)
 
 file(GLOB MAIN_SRC "src/*.cpp")
 add_executable(main ${MAIN_SRC})
@@ -123,8 +130,8 @@ message(STATUS "Build parameters: ${CXX_DEFS}")
 separate_arguments(CXX_DEFS)
 separate_arguments(CXX_TEST_DEFS)
 
+target_link_libraries(main argparse::argparse spdlog::spdlog Eigen3::Eigen tsl::sparse_map tsl::hopscotch_map Boost::boost $<IF:$<TARGET_EXISTS:zstd::libzstd_shared>,zstd::libzstd_shared,zstd::libzstd_static>)
 target_compile_definitions(main PRIVATE ${CXX_DEFS})
-target_link_libraries(main argparse::argparse spdlog::spdlog zstd eigen tsl::sparse_map tsl::hopscotch_map Boost::asio)
 
 if(BUILD_TESTS)
   enable_testing()
@@ -137,7 +144,8 @@ if(BUILD_TESTS)
 
   file(GLOB TEST_SRC "test/*.cpp" "src/files.cpp" "src/config.cpp")
   add_executable(run-test ${TEST_SRC})
-  target_link_libraries(run-test gtest_main zstd tsl::sparse_map tsl::hopscotch_map)
+  target_link_libraries(run-test gtest_main tsl::sparse_map tsl::hopscotch_map)
+  target_link_libraries(run-test argparse::argparse spdlog::spdlog Eigen3::Eigen tsl::sparse_map tsl::hopscotch_map Boost::boost $<IF:$<TARGET_EXISTS:zstd::libzstd_shared>,zstd::libzstd_shared,zstd::libzstd_static>)
   target_compile_definitions(run-test PRIVATE ${CXX_TEST_DEFS})
 
   include(GoogleTest)

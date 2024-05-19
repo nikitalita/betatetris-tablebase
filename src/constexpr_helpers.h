@@ -57,7 +57,7 @@ constexpr int popcount(T a) {
       std::is_same<T, uint32_t>::value ||
       std::is_same<T, uint64_t>::value,
       "not implemented");
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__clang__)
   return std::popcount(a);
 #else
   return __builtin_popcountll(a);
@@ -70,7 +70,7 @@ constexpr int ctz(T a) {
       std::is_same<T, uint32_t>::value ||
       std::is_same<T, uint64_t>::value,
       "not implemented");
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__clang__)
   return std::countr_zero(a);
 #else
   if constexpr(std::is_same<T, uint64_t>::value) {
@@ -87,7 +87,7 @@ constexpr int clz(T a) {
       std::is_same<T, uint32_t>::value ||
       std::is_same<T, uint64_t>::value,
       "not implemented");
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__clang__)
   return std::countl_zero(a);
 #else
   if constexpr(std::is_same<T, uint64_t>::value) {

@@ -148,7 +148,7 @@ void ReadGroup(int group, bool is_ev, std::vector<std::array<float, kSVDColumns>
   const size_t max_pieces = ((kLineCap - 1) * 10 + max_cells) / 4;
   const size_t start_pieces = (group + (group & 1) * 5) / 2;
   for (size_t pieces = start_pieces; pieces <= max_pieces; pieces += 5) {
-    readers.emplace_back(is_ev ? SVDEvPath(pieces) : SVDVarPath(pieces));
+    readers.emplace_back(is_ev ? SVDEvPath(pieces).string() : SVDVarPath(pieces).string());
   }
   const size_t old_size = mat.size();
   mat.resize(old_size + samples);

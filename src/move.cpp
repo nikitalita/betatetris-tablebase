@@ -189,7 +189,7 @@ void CalculateSameLines(
     size_t block_end = std::min(end, block_start + kBlockSize);
     unfinished++;
     io_pool.push_task([&fname,&thread_queue,&works,&unfinished,&cv,&mtx,block_start,block_end,start,&prev,lines,out,&out_idx]() {
-      CompressedClassReader<EvaluateNodeEdgesFast> reader(fname);
+      CompressedClassReader<EvaluateNodeEdgesFast> reader(fname.string());
       reader.Seek(block_start * kPieces);
       for (size_t batch_l = block_start; batch_l < block_end; batch_l += kBatchSize) {
         size_t batch_r = std::min(block_end, batch_l + kBatchSize);
@@ -245,7 +245,7 @@ std::vector<MoveEval> CalculatePieceMoves(
   std::vector<MoveEval> ret(offsets.back());
   std::unique_ptr<CompressedClassWriter<NodeMoveIndex>> writer;
   if constexpr (calculate_moves) {
-    writer.reset(new CompressedClassWriter<NodeMoveIndex>(MoveIndexPath(pieces), 4096 * kPieces));
+    writer.reset(new CompressedClassWriter<NodeMoveIndex>(MoveIndexPath(pieces).string(), 4096 * kPieces));
   }
 
   std::optional<std::thread> writer_thread;
@@ -313,11 +313,11 @@ void MergeRanges(int group, int pieces_l, int pieces_r, const std::vector<size_t
   while (GetGroupByPieces(pieces_l) != group) pieces_l++;
   std::vector<CompressedClassReader<OneClass>> readers;
   for (int pieces = pieces_l; pieces < pieces_r; pieces += kGroups) {
-    readers.emplace_back(one_filename_func(pieces));
+    readers.emplace_back(std::filesystem::path(one_filename_func(pieces)).string());
   }
   if (readers.empty()) return;
   CompressedClassWriter<PartialClass> writer(
-      partial_filename_func(orig_pieces_l, pieces_r, group), index_size, -2);
+      std::filesystem::path(partial_filename_func(orig_pieces_l, pieces_r, group)).string(), index_size, -2);
   std::vector<OneClass> buf(readers.size());
   for (size_t i = 0; i < offset.size() - 1; i++) {
     int start_cells = pieces_l * 4 - GetCellsByGroupOffset(i, group);
@@ -339,9 +339,9 @@ void MergeRanges(int group, int pieces_l, int pieces_r, const std::vector<size_t
   if (delete_after) {
     readers.clear();
     for (int pieces = pieces_l; pieces < pieces_r; pieces += kGroups) {
-      std::string fname = one_filename_func(pieces);
+      std::filesystem::path fname = one_filename_func(pieces);
       std::filesystem::remove(fname);
-      std::filesystem::remove(fname + ".index");
+      std::filesystem::remove(std::filesystem::path(fname.string() + ".index"));
     }
   }
 }
@@ -349,12 +349,12 @@ void MergeRanges(int group, int pieces_l, int pieces_r, const std::vector<size_t
 void MergeFullMoveRanges(int group, const std::vector<int>& sections, bool delete_after) {
   std::vector<CompressedClassReader<PositionNodeEdges>> pos_readers;
   std::vector<CompressedClassReader<NodeMoveIndexRange>> readers;
-  CompressedClassWriter<NodeMovePositionRange> writer(MovePath(group), 256 * kPieces, -2);
+  CompressedClassWriter<NodeMovePositionRange> writer(MovePath(group).string(), 256 * kPieces, -2);
   for (int i = 0; i < kLevels; i++) {
-    pos_readers.emplace_back(PositionEdgePath(group, i));
+    pos_readers.emplace_back(PositionEdgePath(group, i).string());
   }
   for (size_t i = 0; i < sections.size() - 1; i++) {
-    readers.emplace_back(MoveRangePath(sections[i], sections[i+1], group));
+    readers.emplace_back(MoveRangePath(sections[i], sections[i+1], group).string());
   }
   PositionNodeEdges ed[kLevels];
   size_t n_boards = GetBoardCountOffset(group).back();
@@ -390,7 +390,7 @@ void MergeFullMoveRanges(int group, const std::vector<int>& sections, bool delet
   if (delete_after) {
     readers.clear();
     for (size_t i = 0; i < sections.size() - 1; i++) {
-      std::string fname = MoveRangePath(sections[i], sections[i+1], group);
+      std::string fname = MoveRangePath(sections[i], sections[i+1], group).string();
       std::filesystem::remove(fname);
       std::filesystem::remove(fname + ".index");
     }
@@ -399,9 +399,9 @@ void MergeFullMoveRanges(int group, const std::vector<int>& sections, bool delet
 
 void MergeFullThresholdRanges(const std::string& name, int group, const std::vector<int>& sections, bool delete_after) {
   std::vector<CompressedClassReader<NodePartialThreshold>> readers;
-  CompressedClassWriter<NodeThreshold> writer(ThresholdPath(name, group), 256 * kPieces, -2);
+  CompressedClassWriter<NodeThreshold> writer(ThresholdPath(name, group).string(), 256 * kPieces, -2);
   for (size_t i = 0; i < sections.size() - 1; i++) {
-    readers.emplace_back(ThresholdRangePath(name, sections[i], sections[i+1], group));
+    readers.emplace_back(ThresholdRangePath(name, sections[i], sections[i+1], group).string());
   }
   size_t n_boards = GetBoardCountOffset(group).back();
   for (size_t i = 0; i < n_boards * kPieces; i++) {
@@ -416,7 +416,7 @@ void MergeFullThresholdRanges(const std::string& name, int group, const std::vec
   if (delete_after) {
     readers.clear();
     for (size_t i = 0; i < sections.size() - 1; i++) {
-      std::string fname = ThresholdRangePath(name, sections[i], sections[i+1], group);
+      std::string fname = ThresholdRangePath(name, sections[i], sections[i+1], group).string();
       std::filesystem::remove(fname);
       std::filesystem::remove(fname + ".index");
     }
@@ -461,7 +461,7 @@ void WriteThreshold(int pieces, const std::vector<size_t>& offset, const std::ve
                     float start_ratio, float end_ratio, uint8_t buckets) {
   spdlog::info("Writing threshold of piece {}", pieces);
   int group = GetGroupByPieces(pieces);
-  CompressedClassWriter<BasicIOType<uint8_t>> writer(ThresholdOnePath(name, pieces), 65536 * kPieces);
+  CompressedClassWriter<BasicIOType<uint8_t>> writer(ThresholdOnePath(name, pieces).string(), 65536 * kPieces);
   for (size_t i = 0; i < offset.size() - 1; i++) {
     int cells = pieces * 4 - GetCellsByGroupOffset(i, group);
     std::vector<BasicIOType<uint8_t>> out((offset[i+1] - offset[i]) * kPieces, BasicIOType<uint8_t>{});
@@ -561,9 +561,9 @@ void MergeThresholdRanges(const std::string& name, int pieces_l, int pieces_r, b
     for (int group = l; group < r; group++) {
       MergeRanges<BasicIOType<uint8_t>, NodePartialThreshold>(
           group, pieces_l, pieces_r, GetBoardCountOffset(group), delete_after,
-          [&name](int piece){ return ThresholdOnePath(name, piece); },
+          [&name](int piece){ return ThresholdOnePath(name, piece).string(); },
           [&name](int pieces_l, int pieces_r, int group){
-            return ThresholdRangePath(name, pieces_l, pieces_r, group);
+            return ThresholdRangePath(name, pieces_l, pieces_r, group).string();
           },
           65536 * kPieces);
     }

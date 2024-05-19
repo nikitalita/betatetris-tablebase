@@ -344,7 +344,7 @@ if __name__ == "__main__":
             thresholds = list(map(float, f.read().split()))
 
     with torch.no_grad():
-        state_dict = torch.load(args.model)
+        state_dict = torch.load(args.model, map_location=device)
         channels = state_dict['main_start.0.main.0.weight'].shape[0]
         start_blocks = len([0 for i in state_dict if re.fullmatch(r'main_start.*main\.0\.weight', i)])
         end_blocks = len([0 for i in state_dict if re.fullmatch(r'main_end.*main\.0\.weight', i)])

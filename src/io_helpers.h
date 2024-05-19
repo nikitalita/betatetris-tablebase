@@ -63,7 +63,7 @@ struct SimpleIOArray : public std::array<T, sz> {
   using std::array<T, sz>::array;
   using std::array<T, sz>::data;
 
-  SimpleIOArray(const uint8_t buf[], size_t) {
+  constexpr SimpleIOArray(const uint8_t buf[], size_t) {
     memcpy(data(), buf, NumBytes());
   }
 

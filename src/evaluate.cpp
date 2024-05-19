@@ -127,7 +127,7 @@ void CalculateSameLines(
     size_t block_end = std::min(end, block_start + kBlockSize);
     unfinished++;
     io_pool.push_task([&fname,&thread_queue,&works,&unfinished,&cv,&mtx,block_start,block_end,&prev,lines,out]() {
-      CompressedClassReader<EvaluateNodeEdgesFast> reader(fname);
+      CompressedClassReader<EvaluateNodeEdgesFast> reader(fname.string());
       reader.Seek(block_start * kPieces);
       for (size_t batch_l = block_start; batch_l < block_end; batch_l += kBatchSize) {
         size_t batch_r = std::min(block_end, batch_l + kBatchSize);
@@ -222,7 +222,7 @@ std::vector<NodeEval> CalculatePiece(
 std::vector<NodeEval> ReadValues(int pieces, size_t total_size) {
   int group = GetGroupByPieces(pieces);
   if (!total_size) total_size = BoardCount(BoardPath(group));
-  CompressedClassReader<NodeEval> reader(ValuePath(pieces));
+  CompressedClassReader<NodeEval> reader(ValuePath(pieces).string());
   auto values = reader.ReadBatch(total_size);
   if (values.size() != total_size) throw std::length_error("value file length incorrect");
   return values;
@@ -232,7 +232,7 @@ std::vector<MoveEval> ReadValuesEvOnly(int pieces, size_t total_size) {
   constexpr size_t kBatchSize = 131072;
   int group = GetGroupByPieces(pieces);
   if (!total_size) total_size = BoardCount(BoardPath(group));
-  CompressedClassReader<NodeEval> reader(ValuePath(pieces));
+  CompressedClassReader<NodeEval> reader(ValuePath(pieces).string());
   std::vector<MoveEval> values;
   values.reserve(total_size);
   for (size_t i = 0; i < total_size; i += kBatchSize) {
@@ -300,12 +300,12 @@ void RunEvaluate(int start_pieces, const std::vector<int>& output_locations, boo
     values = CalculatePiece(pieces, values, offsets[GetGroupByPieces(pieces)]);
     if (location_set.count(pieces)) {
       spdlog::info("Writing values of piece {}", pieces);
-      CompressedClassWriter<NodeEval> writer(ValuePath(pieces), 2048);
+      CompressedClassWriter<NodeEval> writer(ValuePath(pieces).string(), 2048);
       writer.Write(values);
     }
     if (sample) {
       spdlog::info("Writing samples of piece {}", pieces);
-      ClassWriter<BasicIOType<float>> writer_ev(SVDEvPath(pieces)), writer_var(SVDVarPath(pieces));
+      ClassWriter<BasicIOType<float>> writer_ev(SVDEvPath(pieces).string()), writer_var(SVDVarPath(pieces).string());
       for (auto& [v, p] : samples[GetGroupByPieces(pieces)]) {
         float ev[8], var[8];
         values[v].GetEv(ev);
